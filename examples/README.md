@@ -1,124 +1,124 @@
-# MUP (Model UI Protocol) 示例
+# MUP (Model UI Protocol) Examples
 
-这个目录包含了MUP协议的完整实现示例，展示了如何构建一个基于MUP的AI驱动用户界面系统。
+This directory contains complete implementation examples of the MUP protocol, demonstrating how to build an AI-driven user interface system based on MUP.
 
-## 文件说明
+## File Description
 
-### 核心文件
+### Core Files
 
-- **`simple-form-example.json`** - MUP组件定义示例，展示了一个完整的用户注册表单
-- **`mup-client.js`** - JavaScript客户端实现，负责渲染MUP组件并处理用户交互
-- **`mup-server.py`** - Python服务端实现，负责生成MUP组件并处理事件
-- **`demo.html`** - 完整的演示页面，展示MUP协议的工作流程
+- **`simple-form-example.json`** - MUP component definition example, showcasing a complete user registration form
+- **`mup-client.js`** - JavaScript client implementation, responsible for rendering MUP components and handling user interactions
+- **`mup-server.py`** - Python server implementation, responsible for generating MUP components and handling events
+- **`demo.html`** - Complete demonstration page, showcasing the MUP protocol workflow
 
-## 快速开始
+## Quick Start
 
-### 1. 环境准备
+### 1. Environment Setup
 
-确保你的系统已安装：
+Ensure your system has:
 - Python 3.7+
-- 现代浏览器 (Chrome 90+, Firefox 88+, Safari 14+)
+- Modern browser (Chrome 90+, Firefox 88+, Safari 14+)
 
-### 2. 安装依赖
+### 2. Install Dependencies
 
 ```bash
-# 安装Python依赖
+# Install Python dependencies
 pip install websockets
 ```
 
-### 3. 启动服务器
+### 3. Start the Server
 
 ```bash
-# 在examples目录下运行
+# Run in the examples directory
 python mup-server.py
 ```
 
-服务器将在 `ws://localhost:8080` 启动。
+The server will start at `ws://localhost:8080`.
 
-### 4. 打开演示页面
+### 4. Open the Demo Page
 
-在浏览器中打开 `demo.html` 文件，或者使用本地服务器：
+Open the `demo.html` file in your browser, or use a local server:
 
 ```bash
-# 使用Python内置服务器
+# Use Python's built-in server
 python -m http.server 8000
 
-# 然后访问 http://localhost:8000/demo.html
+# Then visit http://localhost:8000/demo.html
 ```
 
-### 5. 体验演示
+### 5. Experience the Demo
 
-1. 点击"连接服务器"按钮
-2. 观察动态生成的表单界面
-3. 尝试填写表单并查看实时验证
-4. 提交表单查看服务器响应
+1. Click the "Connect to Server" button
+2. Observe the dynamically generated form interface
+3. Try filling out the form and see real-time validation
+4. Submit the form to see server response
 
-## 架构说明
+## Architecture Overview
 
-### 客户端 (mup-client.js)
+### Client Side (mup-client.js)
 
-**主要功能：**
-- WebSocket连接管理
-- MUP组件渲染
-- 用户事件捕获和转发
-- 增量更新处理
-- 表单验证显示
+**Main Functions:**
+- WebSocket connection management
+- MUP component rendering
+- User event capture and forwarding
+- Incremental update handling
+- Form validation display
 
-**核心类：**
-- `MUPClient` - 主客户端类
-- 组件渲染方法：`createContainer()`, `createText()`, `createInput()`, `createButton()`
-- 事件处理：`bindEvents()`, `handleComponentEvent()`
+**Core Classes:**
+- `MUPClient` - Main client class
+- Component rendering methods: `createContainer()`, `createText()`, `createInput()`, `createButton()`
+- Event handling: `bindEvents()`, `handleComponentEvent()`
 
-### 服务端 (mup-server.py)
+### Server Side (mup-server.py)
 
-**主要功能：**
-- WebSocket服务器
-- 动态组件生成
-- 事件路由和处理
-- 表单验证逻辑
-- AI集成接口
+**Main Functions:**
+- WebSocket server
+- Dynamic component generation
+- Event routing and handling
+- Form validation logic
+- AI integration interface
 
-**核心类：**
-- `MUPServer` - 主服务器类
-- `MUPComponent` - 组件数据模型
-- `ComponentBuilder` - 组件构建器
-- `EventHandler` - 事件处理器基类
-- `AIFormGenerator` - AI表单生成器
+**Core Classes:**
+- `MUPServer` - Main server class
+- `MUPComponent` - Component data model
+- `ComponentBuilder` - Component builder
+- `EventHandler` - Event handler base class
+- `AIFormGenerator` - AI form generator
 
-## 协议流程
+## Protocol Flow
 
-### 1. 连接建立
-
-```
-客户端 → 服务器: WebSocket连接
-客户端 → 服务器: 握手消息 (handshake)
-服务器 → 客户端: 初始UI组件树
-```
-
-### 2. 用户交互
+### 1. Connection Establishment
 
 ```
-用户操作 → 客户端: DOM事件
-客户端 → 服务器: MUP事件消息
-服务器处理: 业务逻辑 + 验证
-服务器 → 客户端: 更新指令
-客户端更新: UI状态变更
+Client → Server: WebSocket connection
+Client → Server: Handshake message
+Server → Client: Initial UI component tree
 ```
 
-### 3. 动态更新
+### 2. User Interaction
 
 ```
-AI模型 → 服务器: 新的UI需求
-服务器生成: MUP组件树
-服务器 → 客户端: 组件树更新
-客户端渲染: 新的UI界面
+User Action → Client: DOM event
+Client → Server: MUP event message
+Server Processing: Business logic + validation
+Server → Client: Update instructions
+Client Update: UI state changes
 ```
 
-## 扩展示例
+### 3. Dynamic Updates
 
-### 添加自定义组件
+```
+AI Model → Server: New UI requirements
+Server Generation: MUP component tree
+Server → Client: Component tree update
+Client Rendering: New UI interface
+```
 
-1. **服务端添加组件类型：**
+## Extension Examples
+
+### Adding Custom Components
+
+1. **Add component type on server side:**
 
 ```python
 @staticmethod
@@ -132,7 +132,7 @@ def custom_chart(id: str, data: list, chart_type: str = "line") -> MUPComponent:
     return MUPComponent(id=id, type="custom_chart", props=props)
 ```
 
-2. **客户端添加渲染逻辑：**
+2. **Add rendering logic on client side:**
 
 ```javascript
 createCustomChart(component) {
@@ -142,14 +142,14 @@ createCustomChart(component) {
     canvas.width = props.width || 400;
     canvas.height = props.height || 300;
     
-    // 使用Chart.js或其他图表库渲染
+    // Use Chart.js or other charting libraries for rendering
     this.renderChart(canvas, props.data, props.chart_type);
     
     return canvas;
 }
 ```
 
-### 集成AI模型
+### AI Model Integration
 
 ```python
 class OpenAIFormGenerator(AIFormGenerator):
@@ -160,23 +160,23 @@ class OpenAIFormGenerator(AIFormGenerator):
         response = await self.client.chat.completions.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": "生成MUP组件JSON"},
+                {"role": "system", "content": "Generate MUP component JSON"},
                 {"role": "user", "content": prompt}
             ]
         )
         
-        # 解析AI响应并生成组件
+        # Parse AI response and generate components
         component_data = json.loads(response.choices[0].message.content)
         return self.parse_component(component_data)
 ```
 
-## 性能优化
+## Performance Optimization
 
-### 客户端优化
+### Client-side Optimization
 
-1. **组件缓存：**
+1. **Component Caching:**
 ```javascript
-// 缓存已渲染的组件
+// Cache rendered components
 this.componentCache.set(component.id, {
     component,
     element,
@@ -184,9 +184,9 @@ this.componentCache.set(component.id, {
 });
 ```
 
-2. **增量更新：**
+2. **Incremental Updates:**
 ```javascript
-// 只更新变化的部分
+// Only update changed parts
 applyIncrementalUpdate(operations) {
     operations.forEach(op => {
         if (op.type === 'modify') {
@@ -196,9 +196,9 @@ applyIncrementalUpdate(operations) {
 }
 ```
 
-### 服务端优化
+### Server-side Optimization
 
-1. **连接池管理：**
+1. **Connection Pool Management:**
 ```python
 class ConnectionPool:
     def __init__(self, max_connections=1000):
@@ -211,7 +211,7 @@ class ConnectionPool:
         self.connections[client_id] = websocket
 ```
 
-2. **组件树缓存：**
+2. **Component Tree Caching:**
 ```python
 from functools import lru_cache
 
@@ -220,55 +220,55 @@ def generate_cached_form(form_type: str) -> MUPComponent:
     return self.component_generators[form_type]()
 ```
 
-## 调试技巧
+## Debugging Tips
 
-### 1. 启用详细日志
+### 1. Enable Verbose Logging
 
 ```python
-# 服务端
+# Server side
 import logging
 logging.basicConfig(level=logging.DEBUG)
 ```
 
 ```javascript
-// 客户端
+// Client side
 const client = new MUPClient({
     debug: true,
     logLevel: 'verbose'
 });
 ```
 
-### 2. 消息追踪
+### 2. Message Tracing
 
-在浏览器开发者工具中查看WebSocket消息：
-- Network标签 → WS过滤器
-- 查看发送和接收的MUP消息
+View WebSocket messages in browser developer tools:
+- Network tab → WS filter
+- View sent and received MUP messages
 
-### 3. 组件检查
+### 3. Component Inspection
 
 ```javascript
-// 在浏览器控制台中
+// In browser console
 console.log(window.mupClient.componentCache);
 console.log(window.mupClient.currentTree);
 ```
 
-## 常见问题
+## Common Issues
 
-### Q: 连接失败怎么办？
-A: 检查服务器是否正在运行，端口是否被占用，防火墙设置等。
+### Q: Connection failed?
+A: Check if the server is running, if the port is occupied, firewall settings, etc.
 
-### Q: 组件不显示？
-A: 检查组件定义是否符合MUP规范，查看浏览器控制台错误信息。
+### Q: Components not displaying?
+A: Check if component definitions comply with MUP specifications, review browser console error messages.
 
-### Q: 事件不响应？
-A: 确认事件处理器已正确注册，检查事件名称映射。
+### Q: Events not responding?
+A: Ensure event handlers are properly registered, check event name mappings.
 
-### Q: 如何添加新的组件类型？
-A: 在服务端添加组件构建方法，在客户端添加对应的渲染逻辑。
+### Q: How to add new component types?
+A: Add component building methods on the server side, add corresponding rendering logic on the client side.
 
-## 进阶主题
+## Advanced Topics
 
-### 1. 多租户支持
+### 1. Multi-tenant Support
 
 ```python
 class MultiTenantMUPServer(MUPServer):
@@ -279,10 +279,10 @@ class MultiTenantMUPServer(MUPServer):
     async def handle_client(self, websocket, path):
         tenant_id = self.extract_tenant_id(path)
         config = self.tenant_configs.get(tenant_id)
-        # 使用租户特定配置
+        # Use tenant-specific configuration
 ```
 
-### 2. 权限控制
+### 2. Permission Control
 
 ```python
 class PermissionHandler:
@@ -291,13 +291,13 @@ class PermissionHandler:
         return component_type in user_permissions.allowed_components
 ```
 
-### 3. 国际化支持
+### 3. Internationalization Support
 
 ```javascript
 class I18nMUPClient extends MUPClient {
     constructor(options) {
         super(options);
-        this.locale = options.locale || 'zh-CN';
+        this.locale = options.locale || 'en-US';
         this.translations = options.translations || {};
     }
     
@@ -307,19 +307,19 @@ class I18nMUPClient extends MUPClient {
 }
 ```
 
-## 贡献指南
+## Contributing Guidelines
 
-1. Fork项目
-2. 创建功能分支
-3. 提交更改
-4. 发起Pull Request
+1. Fork the project
+2. Create a feature branch
+3. Commit your changes
+4. Submit a Pull Request
 
-## 许可证
+## License
 
-MIT License - 详见项目根目录的LICENSE文件。
+MIT License - See the LICENSE file in the project root directory for details.
 
-## 联系方式
+## Contact
 
-- 项目主页：https://github.com/your-org/mup
-- 问题反馈：https://github.com/your-org/mup/issues
-- 邮件联系：mup-dev@example.com
+- Project Homepage: https://github.com/muplab/mup-protocol
+- Issue Reports: https://github.com/muplab/mup-protocol/issues
+- Email Contact: mup@csun.cc
