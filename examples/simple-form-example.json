@@ -1,0 +1,175 @@
+{
+  "mup_version": "1.0.0",
+  "component": {
+    "id": "user_registration_form",
+    "type": "container",
+    "version": "1.0.0",
+    "props": {
+      "layout": "flex",
+      "direction": "column",
+      "spacing": 16,
+      "padding": [24, 24, 24, 24],
+      "background": "#ffffff",
+      "border": {
+        "width": 1,
+        "color": "#e0e0e0",
+        "radius": 8
+      },
+      "max_width": 400
+    },
+    "children": [
+      {
+        "id": "form_title",
+        "type": "text",
+        "props": {
+          "content": "用户注册",
+          "variant": "h2",
+          "color": "#333333",
+          "align": "center",
+          "weight": "bold"
+        }
+      },
+      {
+        "id": "name_field",
+        "type": "input",
+        "props": {
+          "input_type": "text",
+          "placeholder": "请输入您的姓名",
+          "value": "",
+          "required": true,
+          "validation": {
+            "min_length": 2,
+            "max_length": 50,
+            "error_message": "姓名长度应在2-50个字符之间"
+          }
+        },
+        "events": {
+          "on_change": {
+            "handler": "validate_name",
+            "payload_schema": {
+              "value": "string",
+              "component_id": "string"
+            }
+          }
+        }
+      },
+      {
+        "id": "email_field",
+        "type": "input",
+        "props": {
+          "input_type": "email",
+          "placeholder": "请输入您的邮箱地址",
+          "value": "",
+          "required": true,
+          "validation": {
+            "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+            "error_message": "请输入有效的邮箱地址"
+          }
+        },
+        "events": {
+          "on_change": {
+            "handler": "validate_email",
+            "payload_schema": {
+              "value": "string",
+              "component_id": "string"
+            }
+          }
+        }
+      },
+      {
+        "id": "password_field",
+        "type": "input",
+        "props": {
+          "input_type": "password",
+          "placeholder": "请输入密码",
+          "value": "",
+          "required": true,
+          "validation": {
+            "min_length": 8,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d@$!%*?&]{8,}$",
+            "error_message": "密码至少8位，包含大小写字母和数字"
+          }
+        },
+        "events": {
+          "on_change": {
+            "handler": "validate_password",
+            "payload_schema": {
+              "value": "string",
+              "component_id": "string"
+            }
+          }
+        }
+      },
+      {
+        "id": "submit_button",
+        "type": "button",
+        "props": {
+          "text": "注册",
+          "variant": "primary",
+          "size": "large",
+          "disabled": false,
+          "loading": false
+        },
+        "events": {
+          "on_click": {
+            "handler": "submit_registration",
+            "payload_schema": {
+              "component_id": "string",
+              "timestamp": "string",
+              "form_data": {
+                "name": "string",
+                "email": "string",
+                "password": "string"
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "login_link",
+        "type": "text",
+        "props": {
+          "content": "已有账户？点击登录",
+          "variant": "caption",
+          "color": "#007bff",
+          "align": "center"
+        },
+        "events": {
+          "on_click": {
+            "handler": "navigate_to_login",
+            "payload_schema": {
+              "component_id": "string"
+            }
+          }
+        }
+      }
+    ],
+    "metadata": {
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z",
+      "source": "gpt-4",
+      "description": "用户注册表单示例",
+      "tags": ["form", "registration", "user-input"]
+    }
+  },
+  "context": {
+    "mcp_context": {
+      "session_id": "session_12345",
+      "user_id": "anonymous",
+      "capabilities": ["text", "validation"],
+      "preferences": {
+        "theme": "light",
+        "language": "zh-CN"
+      }
+    },
+    "ui_context": {
+      "viewport": {
+        "width": 1200,
+        "height": 800,
+        "device_type": "desktop"
+      },
+      "render_target": "web",
+      "supported_components": ["container", "text", "input", "button"]
+    }
+  }
+}

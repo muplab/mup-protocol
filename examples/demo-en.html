@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MUP (Model UI Protocol) Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .demo-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            max-width: 1200px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 600px;
+        }
+        
+        .info-panel {
+            background: #f8f9fa;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .info-panel h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+        
+        .info-panel p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .features {
+            margin-top: 30px;
+        }
+        
+        .feature {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            color: #555;
+        }
+        
+        .feature::before {
+            content: "✓";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        
+        .app-panel {
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #mup-app {
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .connection-status {
+            margin-bottom: 20px;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .status-connecting {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .status-connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        
+        .control-btn:hover {
+            background: #0056b3;
+        }
+        
+        .control-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .logs {
+            margin-top: 20px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+        
+        .log-info {
+            color: #007bff;
+        }
+        
+        .log-success {
+            color: #28a745;
+        }
+        
+        .log-error {
+            color: #dc3545;
+        }
+        
+        .log-warning {
+            color: #ffc107;
+        }
+        
+        @media (max-width: 768px) {
+            .demo-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .info-panel {
+                padding: 20px;
+            }
+            
+            .app-panel {
+                padding: 20px;
+            }
+        }
+        
+        /* MUP Component Styles */
+        .mup-error-message {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        
+        [data-mup-type="input"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            transition: border-color 0.2s;
+        }
+        
+        [data-mup-type="input"]:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        [data-mup-type="button"] {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        [data-mup-type="button"]:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="info-panel">
+            <h1>MUP</h1>
+            <p><strong>Model UI Protocol</strong> is an open standard that enables seamless interaction between Large Language Models and UI interfaces.</p>
+            
+            <p>This demo showcases how to use the MUP protocol to dynamically generate and manage user interface components.</p>
+            
+            <div class="features">
+                <div class="feature">Decoupled UI rendering from model logic</div>
+                <div class="feature">Standardized component definitions</div>
+                <div class="feature">Bidirectional real-time updates</div>
+                <div class="feature">Cross-platform compatibility</div>
+                <div class="feature">Event-driven architecture</div>
+            </div>
+            
+            <div class="controls">
+                <button class="control-btn" onclick="connectToServer()">Connect Server</button>
+                <button class="control-btn" onclick="disconnectFromServer()">Disconnect</button>
+                <button class="control-btn" onclick="loadSampleForm()">Load Sample Form</button>
+                <button class="control-btn" onclick="clearLogs()">Clear Logs</button>
+            </div>
+            
+            <div class="logs" id="logs">
+                <div class="log-entry log-info">Waiting to connect to MUP server...</div>
+            </div>
+        </div>
+        
+        <div class="app-panel">
+            <div class="connection-status status-connecting" id="status">
+                Connecting to server...
+            </div>
+            
+            <div id="mup-app">
+                <!-- MUP components will be rendered here -->
+            </div>
+        </div>
+    </div>
+    
+    <script src="mup-client.js"></script>
+    <script>
+        let mupClient = null;
+        let isConnected = false;
+        
+        // Logging functionality
+        function addLog(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logs.appendChild(entry);
+            logs.scrollTop = logs.scrollHeight;
+        }
+        
+        // Update connection status
+        function updateStatus(status, message) {
+            const statusEl = document.getElementById('status');
+            statusEl.className = `connection-status status-${status}`;
+            statusEl.textContent = message;
+        }
+        
+        // Connect to server
+        function connectToServer() {
+            if (mupClient) {
+                mupClient.destroy();
+            }
+            
+            addLog('Connecting to MUP server...', 'info');
+            updateStatus('connecting', 'Connecting...');
+            
+            try {
+                mupClient = new MUPClient({
+                    containerId: 'mup-app',
+                    serverUrl: 'ws://localhost:8080'
+                });
+                
+                // Listen for connection events
+                const originalSetupWebSocket = mupClient.setupWebSocket;
+                mupClient.setupWebSocket = function() {
+                    originalSetupWebSocket.call(this);
+                    
+                    this.socket.onopen = () => {
+                        addLog('Connected to MUP server', 'success');
+                        updateStatus('connected', 'Connected');
+                        isConnected = true;
+                        this.sendHandshake();
+                        
+                        // Setup enhanced event handlers
+                        setTimeout(() => setupDemoEventHandlers(), 100);
+                    };
+                    
+                    this.socket.onclose = () => {
+                        addLog('Connection to server closed', 'warning');
+                        updateStatus('error', 'Disconnected');
+                        isConnected = false;
+                    };
+                    
+                    this.socket.onerror = (error) => {
+                        addLog('Connection error: ' + (error.message || 'Unknown error'), 'error');
+                        updateStatus('error', 'Connection Error');
+                        isConnected = false;
+                    };
+                    
+                    // Listen for messages
+                    const originalHandleServerMessage = this.handleServerMessage;
+                    this.handleServerMessage = function(message) {
+                        addLog('Received server message: ' + message.mup.payload.type, 'info');
+                        originalHandleServerMessage.call(this, message);
+                    };
+                    
+                    // Fix event binding
+                    const originalRenderComponent = this.renderComponent;
+                    this.renderComponent = function(component, parentElement) {
+                        const element = originalRenderComponent.call(this, component, parentElement);
+                        this.bindEvents(element, component);
+                        return element;
+                    };
+                };
+                
+                mupClient.setupWebSocket();
+                
+            } catch (error) {
+                addLog('Connection failed: ' + error.message, 'error');
+                updateStatus('error', 'Connection Failed');
+            }
+        }
+        
+        // Disconnect from server
+        function disconnectFromServer() {
+            if (mupClient) {
+                mupClient.destroy();
+                mupClient = null;
+                addLog('Disconnected', 'info');
+                updateStatus('connecting', 'Not Connected');
+                isConnected = false;
+                
+                // Clear UI
+                document.getElementById('mup-app').innerHTML = '';
+            }
+        }
+        
+        // Load sample form
+        function loadSampleForm() {
+            if (!isConnected) {
+                addLog('Please connect to server first', 'warning');
+                return;
+            }
+            
+            // Load local sample form
+            fetch('simple-form-example.json')
+                .then(response => response.json())
+                .then(data => {
+                    addLog('Loading sample form', 'info');
+                    if (mupClient) {
+                        mupClient.handleComponentTreeUpdate({
+                            root_component: data.component
+                        });
+                    }
+                })
+                .catch(error => {
+                    addLog('Failed to load sample form: ' + error.message, 'error');
+                    
+                    // Create a comprehensive demo form
+                    const sampleComponent = {
+                        id: 'demo_form',
+                        type: 'container',
+                        props: {
+                            layout: 'flex',
+                            direction: 'column',
+                            spacing: 20,
+                            padding: [30, 30, 30, 30],
+                            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+                            border: { width: 2, color: '#4a90e2', radius: 12 },
+                            max_width: 500
+                        },
+                        children: [
+                            {
+                                id: 'demo_title',
+                                type: 'text',
+                                props: {
+                                    content: '🚀 MUP Protocol Demo',
+                                    variant: 'h1',
+                                    align: 'center',
+                                    color: '#2c3e50',
+                                    weight: 'bold',
+                                    size: 28
+                                }
+                            },
+                            {
+                                id: 'demo_subtitle',
+                                type: 'text',
+                                props: {
+                                    content: 'Experience dynamic UI generation with real-time validation',
+                                    variant: 'body',
+                                    align: 'center',
+                                    color: '#7f8c8d',
+                                    size: 16
+                                }
+                            },
+                            {
+                                id: 'name_input',
+                                type: 'input',
+                                props: {
+                                    input_type: 'text',
+                                    placeholder: '👤 Enter your full name',
+                                    required: true,
+                                    validation: {
+                                        min_length: 2,
+                                        max_length: 50,
+                                        error_message: 'Name must be 2-50 characters'
+                                    }
+                                },
+                                events: {
+                                    on_change: {
+                                        handler: 'validate_name',
+                                        payload_schema: { value: 'string', component_id: 'string' }
+                                    }
+                                }
+                            },
+                            {
+                                id: 'email_input',
+                                type: 'input',
+                                props: {
+                                    input_type: 'email',
+                                    placeholder: '📧 Enter your email address',
+                                    required: true,
+                                    validation: {
+                                        pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
+                                        error_message: 'Please enter a valid email address'
+                                    }
+                                },
+                                events: {
+                                    on_change: {
+                                        handler: 'validate_email',
+                                        payload_schema: { value: 'string', component_id: 'string' }
+                                    }
+                                }
+                            },
+                            {
+                                id: 'phone_input',
+                                type: 'input',
+                                props: {
+                                    input_type: 'tel',
+                                    placeholder: '📱 Enter your phone number',
+                                    required: false
+                                },
+                                events: {
+                                    on_change: {
+                                        handler: 'validate_phone',
+                                        payload_schema: { value: 'string' }
+                                    }
+                                }
+                            },
+                            {
+                                id: 'message_input',
+                                type: 'input',
+                                props: {
+                                    input_type: 'textarea',
+                                    placeholder: '💬 Tell us about your experience with MUP...',
+                                    required: false
+                                },
+                                events: {
+                                    on_change: {
+                                        handler: 'update_counter',
+                                        payload_schema: { value: 'string' }
+                                    }
+                                }
+                            },
+                            {
+                                id: 'char_counter',
+                                type: 'text',
+                                props: {
+                                    content: 'Characters: 0',
+                                    variant: 'caption',
+                                    align: 'right',
+                                    color: '#95a5a6',
+                                    size: 12
+                                }
+                            },
+                            {
+                                id: 'button_container',
+                                type: 'container',
+                                props: {
+                                    layout: 'flex',
+                                    direction: 'row',
+                                    spacing: 12
+                                },
+                                children: [
+                                    {
+                                        id: 'clear_button',
+                                        type: 'button',
+                                        props: {
+                                            text: '🗑️ Clear',
+                                            variant: 'secondary'
+                                        },
+                                        events: {
+                                            on_click: {
+                                                handler: 'clear_form',
+                                                payload_schema: { component_id: 'string' }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        id: 'submit_button',
+                                        type: 'button',
+                                        props: {
+                                            text: '✨ Submit Demo',
+                                            variant: 'primary'
+                                        },
+                                        events: {
+                                            on_click: {
+                                                handler: 'submit_registration',
+                                                payload_schema: { component_id: 'string', timestamp: 'string' }
+                                            }
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                id: 'status_message',
+                                type: 'text',
+                                props: {
+                                    content: '✅ Ready to submit',
+                                    variant: 'body',
+                                    align: 'center',
+                                    color: '#27ae60',
+                                    size: 14
+                                }
+                            }
+                        ]
+                    };
+                    
+                    if (mupClient) {
+                        mupClient.handleComponentTreeUpdate({
+                            root_component: sampleComponent
+                        });
+                    }
+                });
+        }
+        
+        // Clear logs
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+        
+        // Auto-connect after page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            addLog('MUP demo page loaded', 'success');
+            addLog('Click "Connect Server" button to start demo', 'info');
+            
+            // Check if local server is running
+            setTimeout(() => {
+                addLog('Tip: Make sure MUP server is running (python mup-server.py)', 'warning');
+            }, 2000);
+        });
+        
+        // Enhanced event handlers for demo
+        function setupDemoEventHandlers() {
+            if (!mupClient) return;
+            
+            // Character counter handler
+            mupClient.eventHandlers.set('update_counter', (payload, component) => {
+                const value = payload.value || '';
+                const counterEl = document.querySelector('[data-mup-id="char_counter"]');
+                if (counterEl) {
+                    counterEl.textContent = `Characters: ${value.length}`;
+                    if (value.length > 200) {
+                        counterEl.style.color = '#e74c3c';
+                    } else {
+                        counterEl.style.color = '#95a5a6';
+                    }
+                }
+            });
+            
+            // Clear form handler
+            mupClient.eventHandlers.set('clear_form', (payload, component) => {
+                const inputs = document.querySelectorAll('[data-mup-type="input"]');
+                inputs.forEach(input => {
+                    input.value = '';
+                    input.style.borderColor = '#e9ecef';
+                });
+                
+                // Reset counter
+                const counterEl = document.querySelector('[data-mup-id="char_counter"]');
+                if (counterEl) {
+                    counterEl.textContent = 'Characters: 0';
+                    counterEl.style.color = '#95a5a6';
+                }
+                
+                // Update status
+                const statusEl = document.querySelector('[data-mup-id="status_message"]');
+                if (statusEl) {
+                    statusEl.textContent = '🔄 Form cleared';
+                    statusEl.style.color = '#f39c12';
+                    setTimeout(() => {
+                        statusEl.textContent = '✅ Ready to submit';
+                        statusEl.style.color = '#27ae60';
+                    }, 2000);
+                }
+                
+                addLog('Form cleared by user', 'info');
+            });
+            
+            // Phone validation handler
+            mupClient.eventHandlers.set('validate_phone', (payload, component) => {
+                const value = payload.value || '';
+                const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+                const element = document.querySelector(`[data-mup-id="${component.id}"]`);
+                
+                if (value && !phoneRegex.test(value.replace(/[\s\-\(\)]/g, ''))) {
+                    if (element) {
+                        element.style.borderColor = '#e74c3c';
+                        mupClient.showErrorMessage(component.id, 'Please enter a valid phone number');
+                    }
+                } else {
+                    if (element) {
+                        element.style.borderColor = '#27ae60';
+                        mupClient.removeErrorMessage(component.id);
+                    }
+                }
+            });
+            
+            // Enhanced submit handler
+            const originalSubmitHandler = mupClient.eventHandlers.get('submit_registration');
+            mupClient.eventHandlers.set('submit_registration', (payload, component) => {
+                const formData = mupClient.collectFormData();
+                const statusEl = document.querySelector('[data-mup-id="status_message"]');
+                
+                // Validate required fields
+                const nameValue = formData['name_input'] || '';
+                const emailValue = formData['email_input'] || '';
+                
+                if (!nameValue || nameValue.length < 2) {
+                    if (statusEl) {
+                        statusEl.textContent = '❌ Please enter a valid name';
+                        statusEl.style.color = '#e74c3c';
+                    }
+                    addLog('Validation failed: Invalid name', 'error');
+                    return;
+                }
+                
+                const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                if (!emailValue || !emailRegex.test(emailValue)) {
+                    if (statusEl) {
+                        statusEl.textContent = '❌ Please enter a valid email';
+                        statusEl.style.color = '#e74c3c';
+                    }
+                    addLog('Validation failed: Invalid email', 'error');
+                    return;
+                }
+                
+                // Show success animation
+                if (statusEl) {
+                    statusEl.textContent = '🎉 Demo submitted successfully!';
+                    statusEl.style.color = '#27ae60';
+                    statusEl.style.fontWeight = 'bold';
+                }
+                
+                addLog(`Demo form submitted: Name=${nameValue}, Email=${emailValue}`, 'success');
+                
+                // Call original handler if exists
+                if (originalSubmitHandler) {
+                    originalSubmitHandler(payload, component);
+                }
+            });
+        }
+        
+        // Listen for window resize
+        window.addEventListener('resize', () => {
+            if (mupClient) {
+                // Notify client of viewport changes
+                const context = mupClient.getCurrentContext();
+                addLog(`Viewport size changed: ${context.viewport.width}x${context.viewport.height}`, 'info');
+            }
+        });
+        
+        // Auto-connect when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            addLog('Page loaded, attempting to connect to server...', 'info');
+            connectToServer();
+        });
+    </script>
+</body>
+</html>

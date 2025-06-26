@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MUP 2.0 + LLM 集成演示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .panel h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+
+        .chat-container {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f8fafc;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background: #4299e1;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.assistant {
+            background: #48bb78;
+            color: white;
+        }
+
+        .message.system {
+            background: #ed8936;
+            color: white;
+            font-style: italic;
+            max-width: 100%;
+            text-align: center;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #3182ce;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+        }
+
+        .btn-warning {
+            background: #ed8936;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #dd6b20;
+        }
+
+        .status {
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .status.connected {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status.disconnected {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .dynamic-ui {
+            min-height: 300px;
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 20px;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .dynamic-ui.has-content {
+            border-style: solid;
+            border-color: #48bb78;
+            background: white;
+            align-items: stretch;
+            justify-content: flex-start;
+            text-align: left;
+        }
+
+        .placeholder {
+            color: #a0aec0;
+            font-style: italic;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .scenario-btn {
+            padding: 8px 16px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .scenario-btn:hover {
+            background: #edf2f7;
+            border-color: #a0aec0;
+        }
+
+        .scenario-btn.active {
+            background: #4299e1;
+            color: white;
+            border-color: #4299e1;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .data-table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .data-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e2e8f0;
+            border-top: 2px solid #4299e1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .metric {
+            background: #f7fafc;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4299e1;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: #718096;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 MUP 2.0 + LLM 集成演示</h1>
+            <p>体验大模型驱动的动态UI生成能力</p>
+        </div>
+
+        <div class="demo-grid">
+            <!-- 左侧：LLM 对话界面 -->
+            <div class="panel">
+                <h3>💬 LLM 对话界面</h3>
+                <div class="status disconnected" id="llmStatus">未连接</div>
+                
+                <div class="controls">
+                    <button class="scenario-btn active" data-scenario="form">表单生成</button>
+                    <button class="scenario-btn" data-scenario="dashboard">数据面板</button>
+                    <button class="scenario-btn" data-scenario="survey">问卷调查</button>
+                    <button class="scenario-btn" data-scenario="ecommerce">电商界面</button>
+                </div>
+
+                <div class="chat-container" id="chatContainer">
+                    <div class="message system">
+                        🎯 选择一个场景开始对话，或直接输入您的需求
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <input type="text" id="userInput" placeholder="描述您想要的界面..." 
+                           onkeypress="if(event.key==='Enter') sendMessage()">
+                    <button class="btn btn-primary" onclick="sendMessage()">发送</button>
+                    <button class="btn btn-success" onclick="connectToMUP()">连接MUP</button>
+                </div>
+            </div>
+
+            <!-- 右侧：动态UI生成区域 -->
+            <div class="panel">
+                <h3>🎨 动态UI生成区域</h3>
+                <div class="status disconnected" id="mupStatus">MUP未连接</div>
+                
+                <div class="dynamic-ui" id="dynamicUI">
+                    <div class="placeholder">
+                        <h4>等待LLM生成UI...</h4>
+                        <p>与左侧LLM对话，描述您想要的界面</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部：系统监控 -->
+        <div class="panel">
+            <h3>📊 系统监控</h3>
+            <div class="metrics">
+                <div class="metric">
+                    <div class="metric-value" id="messageCount">0</div>
+                    <div class="metric-label">消息数量</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="uiGenerations">0</div>
+                    <div class="metric-label">UI生成次数</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="avgResponseTime">0ms</div>
+                    <div class="metric-label">平均响应时间</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="connectionTime">0s</div>
+                    <div class="metric-label">连接时长</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="mup-client-v2.js"></script>
+    <script>
+        // 全局变量
+        let mupClient = null;
+        let currentScenario = 'form';
+        let messageCount = 0;
+        let uiGenerations = 0;
+        let responseTimes = [];
+        let connectionStartTime = null;
+
+        // Mock LLM 响应数据
+        const mockLLMResponses = {
+            form: {
+                "我需要一个用户注册表单": {
+                    response: "我来为您创建一个用户注册表单，包含姓名、邮箱、密码和确认密码字段。",
+                    ui: {
+                        type: "form",
+                        title: "用户注册",
+                        fields: [
+                            { type: "text", name: "name", label: "姓名", required: true },
+                            { type: "email", name: "email", label: "邮箱地址", required: true },
+                            { type: "password", name: "password", label: "密码", required: true },
+                            { type: "password", name: "confirmPassword", label: "确认密码", required: true }
+                        ],
+                        submitText: "注册"
+                    }
+                },
+                "创建一个联系我们的表单": {
+                    response: "我为您设计了一个联系表单，包含必要的联系信息字段。",
+                    ui: {
+                        type: "form",
+                        title: "联系我们",
+                        fields: [
+                            { type: "text", name: "name", label: "您的姓名", required: true },
+                            { type: "email", name: "email", label: "邮箱地址", required: true },
+                            { type: "select", name: "subject", label: "咨询类型", 
+                              options: ["产品咨询", "技术支持", "商务合作", "其他"], required: true },
+                            { type: "textarea", name: "message", label: "留言内容", required: true }
+                        ],
+                        submitText: "发送消息"
+                    }
+                }
+            },
+            dashboard: {
+                "显示销售数据面板": {
+                    response: "我为您创建了一个销售数据仪表板，展示关键业务指标。",
+                    ui: {
+                        type: "dashboard",
+                        title: "销售数据仪表板",
+                        widgets: [
+                            { type: "metric", title: "今日销售额", value: "¥128,456", change: "+12.5%" },
+                            { type: "metric", title: "订单数量", value: "1,234", change: "+8.3%" },
+                            { type: "metric", title: "客户数量", value: "5,678", change: "+15.2%" },
+                            { type: "chart", title: "月度销售趋势", data: "chart_data" }
+                        ]
+                    }
+                },
+                "创建用户活跃度统计": {
+                    response: "我创建了用户活跃度统计面板，帮您了解用户行为。",
+                    ui: {
+                        type: "dashboard",
+                        title: "用户活跃度统计",
+                        widgets: [
+                            { type: "metric", title: "日活用户", value: "12,345", change: "+5.2%" },
+                            { type: "metric", title: "月活用户", value: "45,678", change: "+12.8%" },
+                            { type: "metric", title: "平均会话时长", value: "8分32秒", change: "+3.1%" },
+                            { type: "table", title: "热门页面", data: "page_data" }
+                        ]
+                    }
+                }
+            },
+            survey: {
+                "创建产品满意度调查": {
+                    response: "我为您设计了一份产品满意度调查问卷，包含多种题型。",
+                    ui: {
+                        type: "survey",
+                        title: "产品满意度调查",
+                        questions: [
+                            { type: "radio", question: "您对我们的产品整体满意度如何？", 
+                              options: ["非常满意", "满意", "一般", "不满意", "非常不满意"] },
+                            { type: "checkbox", question: "您最喜欢产品的哪些功能？（多选）", 
+                              options: ["界面设计", "功能丰富", "操作简单", "响应速度", "客户服务"] },
+                            { type: "text", question: "您还希望我们增加什么功能？" },
+                            { type: "rating", question: "您会向朋友推荐我们的产品吗？", scale: 10 }
+                        ]
+                    }
+                }
+            },
+            ecommerce: {
+                "创建商品展示页面": {
+                    response: "我为您创建了一个商品展示页面，包含商品信息和购买功能。",
+                    ui: {
+                        type: "ecommerce",
+                        title: "商品详情",
+                        product: {
+                            name: "智能手表 Pro",
+                            price: "¥2,999",
+                            originalPrice: "¥3,499",
+                            rating: 4.8,
+                            reviews: 1234,
+                            features: ["心率监测", "GPS定位", "50米防水", "7天续航"],
+                            description: "全新智能手表，集健康监测、运动追踪、智能通知于一体。"
+                        },
+                        actions: ["立即购买", "加入购物车", "收藏商品"]
+                    }
+                }
+            }
+        };
+
+        // 场景预设提示
+        const scenarioPrompts = {
+            form: "我需要一个用户注册表单",
+            dashboard: "显示销售数据面板",
+            survey: "创建产品满意度调查",
+            ecommerce: "创建商品展示页面"
+        };
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            setupScenarioButtons();
+            updateMetrics();
+            setInterval(updateConnectionTime, 1000);
+        });
+
+        // 设置场景按钮
+        function setupScenarioButtons() {
+            document.querySelectorAll('.scenario-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentScenario = this.dataset.scenario;
+                    
+                    // 自动填入场景提示
+                    const prompt = scenarioPrompts[currentScenario];
+                    document.getElementById('userInput').value = prompt;
+                });
+            });
+        }
+
+        // 连接到MUP服务器
+        async function connectToMUP() {
+            try {
+                mupClient = new MUPClientV2();
+                
+                mupClient.on('connected', () => {
+                    updateStatus('mupStatus', 'connected', 'MUP已连接');
+                    updateStatus('llmStatus', 'connected', 'LLM已就绪');
+                    connectionStartTime = Date.now();
+                    addMessage('system', '🎉 MUP服务器连接成功！现在可以开始对话了。');
+                });
+                
+                mupClient.on('disconnected', () => {
+                    updateStatus('mupStatus', 'disconnected', 'MUP未连接');
+                    updateStatus('llmStatus', 'disconnected', 'LLM未连接');
+                    addMessage('system', '❌ 与MUP服务器连接断开。');
+                });
+                
+                mupClient.on('error', (error) => {
+                    console.error('MUP连接错误:', error);
+                    addMessage('system', `❌ 连接错误: ${error.message}`);
+                });
+                
+                await mupClient.connect('ws://localhost:8080');
+                
+            } catch (error) {
+                console.error('连接失败:', error);
+                addMessage('system', `❌ 连接失败: ${error.message}`);
+            }
+        }
+
+        // 发送消息
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            if (!mupClient || !mupClient.isConnected()) {
+                addMessage('system', '⚠️ 请先连接MUP服务器');
+                return;
+            }
+            
+            // 显示用户消息
+            addMessage('user', message);
+            input.value = '';
+            
+            // 显示加载状态
+            const loadingMsg = addMessage('assistant', '<div class="loading"></div> 正在思考...');
+            
+            try {
+                const startTime = Date.now();
+                
+                // 模拟LLM处理延迟
+                await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+                
+                // 获取Mock响应
+                const response = getMockLLMResponse(message);
+                
+                // 更新助手消息
+                loadingMsg.innerHTML = response.response;
+                
+                // 生成UI
+                if (response.ui) {
+                    await generateUI(response.ui);
+                    uiGenerations++;
+                }
+                
+                // 记录响应时间
+                const responseTime = Date.now() - startTime;
+                responseTimes.push(responseTime);
+                messageCount++;
+                
+                updateMetrics();
+                
+            } catch (error) {
+                loadingMsg.innerHTML = `❌ 处理失败: ${error.message}`;
+            }
+        }
+
+        // 获取Mock LLM响应
+        function getMockLLMResponse(message) {
+            const scenarioResponses = mockLLMResponses[currentScenario] || {};
+            
+            // 精确匹配
+            if (scenarioResponses[message]) {
+                return scenarioResponses[message];
+            }
+            
+            // 模糊匹配
+            for (const [key, value] of Object.entries(scenarioResponses)) {
+                if (message.includes(key.split(' ')[0]) || key.includes(message.split(' ')[0])) {
+                    return value;
+                }
+            }
+            
+            // 默认响应
+            return {
+                response: `我理解您想要创建${currentScenario}相关的界面。让我为您生成一个示例界面。`,
+                ui: getDefaultUI(currentScenario)
+            };
+        }
+
+        // 获取默认UI
+        function getDefaultUI(scenario) {
+            const defaults = {
+                form: {
+                    type: "form",
+                    title: "示例表单",
+                    fields: [
+                        { type: "text", name: "field1", label: "字段1", required: true },
+                        { type: "email", name: "field2", label: "字段2", required: false }
+                    ],
+                    submitText: "提交"
+                },
+                dashboard: {
+                    type: "dashboard",
+                    title: "数据面板",
+                    widgets: [
+                        { type: "metric", title: "指标1", value: "123", change: "+5%" },
+                        { type: "metric", title: "指标2", value: "456", change: "-2%" }
+                    ]
+                },
+                survey: {
+                    type: "survey",
+                    title: "调查问卷",
+                    questions: [
+                        { type: "radio", question: "您的满意度如何？", options: ["满意", "一般", "不满意"] }
+                    ]
+                },
+                ecommerce: {
+                    type: "ecommerce",
+                    title: "商品信息",
+                    product: {
+                        name: "示例商品",
+                        price: "¥99",
+                        rating: 4.5,
+                        description: "这是一个示例商品描述。"
+                    }
+                }
+            };
+            
+            return defaults[scenario] || defaults.form;
+        }
+
+        // 生成UI
+        async function generateUI(uiData) {
+            const container = document.getElementById('dynamicUI');
+            container.classList.add('has-content');
+            
+            let html = '';
+            
+            switch (uiData.type) {
+                case 'form':
+                    html = generateFormHTML(uiData);
+                    break;
+                case 'dashboard':
+                    html = generateDashboardHTML(uiData);
+                    break;
+                case 'survey':
+                    html = generateSurveyHTML(uiData);
+                    break;
+                case 'ecommerce':
+                    html = generateEcommerceHTML(uiData);
+                    break;
+                default:
+                    html = '<p>未知的UI类型</p>';
+            }
+            
+            container.innerHTML = html;
+            
+            // 如果连接了MUP，发送组件更新
+            if (mupClient && mupClient.isConnected()) {
+                try {
+                    await mupClient.sendEvent('ui_generator', 'generate_ui', {
+                        ui_type: uiData.type,
+                        ui_data: uiData
+                    });
+                } catch (error) {
+                    console.error('发送UI更新失败:', error);
+                }
+            }
+        }
+
+        // 生成表单HTML
+        function generateFormHTML(data) {
+            let html = `<h4>${data.title}</h4><form onsubmit="handleFormSubmit(event)">`;
+            
+            data.fields.forEach(field => {
+                html += '<div class="form-group">';
+                html += `<label>${field.label}${field.required ? ' *' : ''}</label>`;
+                
+                switch (field.type) {
+                    case 'textarea':
+                        html += `<textarea name="${field.name}" ${field.required ? 'required' : ''}></textarea>`;
+                        break;
+                    case 'select':
+                        html += `<select name="${field.name}" ${field.required ? 'required' : ''}>`;
+                        if (field.options) {
+                            field.options.forEach(option => {
+                                html += `<option value="${option}">${option}</option>`;
+                            });
+                        }
+                        html += '</select>';
+                        break;
+                    default:
+                        html += `<input type="${field.type}" name="${field.name}" ${field.required ? 'required' : ''}>`;
+                }
+                
+                html += '</div>';
+            });
+            
+            html += `<button type="submit" class="btn btn-primary">${data.submitText}</button>`;
+            html += '</form>';
+            
+            return html;
+        }
+
+        // 生成仪表板HTML
+        function generateDashboardHTML(data) {
+            let html = `<h4>${data.title}</h4><div class="metrics">`;
+            
+            data.widgets.forEach(widget => {
+                if (widget.type === 'metric') {
+                    html += `
+                        <div class="metric">
+                            <div class="metric-value">${widget.value}</div>
+                            <div class="metric-label">${widget.title}</div>
+                            ${widget.change ? `<div style="font-size: 0.7rem; color: ${widget.change.startsWith('+') ? '#48bb78' : '#f56565'}">${widget.change}</div>` : ''}
+                        </div>
+                    `;
+                } else if (widget.type === 'table') {
+                    html += `
+                        <div style="grid-column: 1 / -1;">
+                            <h5>${widget.title}</h5>
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>页面</th><th>访问量</th><th>跳出率</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>首页</td><td>12,345</td><td>25.3%</td></tr>
+                                    <tr><td>产品页</td><td>8,901</td><td>18.7%</td></tr>
+                                    <tr><td>关于我们</td><td>3,456</td><td>45.2%</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+            });
+            
+            html += '</div>';
+            return html;
+        }
+
+        // 生成调查HTML
+        function generateSurveyHTML(data) {
+            let html = `<h4>${data.title}</h4><form onsubmit="handleSurveySubmit(event)">`;
+            
+            data.questions.forEach((question, index) => {
+                html += '<div class="form-group">';
+                html += `<label>${question.question}</label>`;
+                
+                switch (question.type) {
+                    case 'radio':
+                        question.options.forEach(option => {
+                            html += `
+                                <div>
+                                    <input type="radio" name="q${index}" value="${option}" id="q${index}_${option}">
+                                    <label for="q${index}_${option}" style="margin-left: 5px; font-weight: normal;">${option}</label>
+                                </div>
+                            `;
+                        });
+                        break;
+                    case 'checkbox':
+                        question.options.forEach(option => {
+                            html += `
+                                <div>
+                                    <input type="checkbox" name="q${index}[]" value="${option}" id="q${index}_${option}">
+                                    <label for="q${index}_${option}" style="margin-left: 5px; font-weight: normal;">${option}</label>
+                                </div>
+                            `;
+                        });
+                        break;
+                    case 'text':
+                        html += `<input type="text" name="q${index}">`;
+                        break;
+                    case 'rating':
+                        html += '<div style="display: flex; gap: 5px;">';
+                        for (let i = 1; i <= question.scale; i++) {
+                            html += `
+                                <input type="radio" name="q${index}" value="${i}" id="q${index}_${i}">
+                                <label for="q${index}_${i}" style="margin: 0; font-weight: normal;">${i}</label>
+                            `;
+                        }
+                        html += '</div>';
+                        break;
+                }
+                
+                html += '</div>';
+            });
+            
+            html += '<button type="submit" class="btn btn-primary">提交调查</button>';
+            html += '</form>';
+            
+            return html;
+        }
+
+        // 生成电商HTML
+        function generateEcommerceHTML(data) {
+            const product = data.product;
+            let html = `
+                <h4>${data.title}</h4>
+                <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
+                    <h3>${product.name}</h3>
+                    <div style="display: flex; align-items: center; gap: 10px; margin: 10px 0;">
+                        <span style="font-size: 1.5rem; font-weight: bold; color: #e53e3e;">${product.price}</span>
+                        ${product.originalPrice ? `<span style="text-decoration: line-through; color: #a0aec0;">${product.originalPrice}</span>` : ''}
+                    </div>
+                    ${product.rating ? `
+                        <div style="margin: 10px 0;">
+                            <span>⭐ ${product.rating}</span>
+                            <span style="color: #718096; margin-left: 10px;">(${product.reviews || 0} 评价)</span>
+                        </div>
+                    ` : ''}
+                    ${product.features ? `
+                        <div style="margin: 15px 0;">
+                            <strong>产品特色：</strong>
+                            <ul style="margin: 5px 0; padding-left: 20px;">
+                                ${product.features.map(feature => `<li>${feature}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    <p style="color: #4a5568; margin: 15px 0;">${product.description}</p>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        ${data.actions ? data.actions.map(action => `
+                            <button class="btn ${action === '立即购买' ? 'btn-primary' : 'btn-success'}" 
+                                    onclick="handleProductAction('${action}')">${action}</button>
+                        `).join('') : ''}
+                    </div>
+                </div>
+            `;
+            
+            return html;
+        }
+
+        // 处理表单提交
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+            addMessage('system', `📝 表单提交成功！数据: ${JSON.stringify(data, null, 2)}`);
+        }
+
+        // 处理调查提交
+        function handleSurveySubmit(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+            addMessage('system', `📊 调查提交成功！感谢您的参与。`);
+        }
+
+        // 处理商品操作
+        function handleProductAction(action) {
+            addMessage('system', `🛒 ${action}操作已触发！`);
+        }
+
+        // 添加消息
+        function addMessage(type, content) {
+            const container = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.innerHTML = content;
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+            return messageDiv;
+        }
+
+        // 更新状态
+        function updateStatus(elementId, status, text) {
+            const element = document.getElementById(elementId);
+            element.className = `status ${status}`;
+            element.textContent = text;
+        }
+
+        // 更新指标
+        function updateMetrics() {
+            document.getElementById('messageCount').textContent = messageCount;
+            document.getElementById('uiGenerations').textContent = uiGenerations;
+            
+            if (responseTimes.length > 0) {
+                const avgTime = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
+                document.getElementById('avgResponseTime').textContent = Math.round(avgTime) + 'ms';
+            }
+        }
+
+        // 更新连接时间
+        function updateConnectionTime() {
+            if (connectionStartTime) {
+                const elapsed = Math.floor((Date.now() - connectionStartTime) / 1000);
+                document.getElementById('connectionTime').textContent = elapsed + 's';
+            }
+        }
+    </script>
+</body>
+</html>

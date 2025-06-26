@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MUP 2.0 + LLM Integration Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .panel h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+
+        .chat-container {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f8fafc;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background: #4299e1;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.assistant {
+            background: #48bb78;
+            color: white;
+        }
+
+        .message.system {
+            background: #ed8936;
+            color: white;
+            font-style: italic;
+            max-width: 100%;
+            text-align: center;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #3182ce;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+        }
+
+        .btn-warning {
+            background: #ed8936;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #dd6b20;
+        }
+
+        .status {
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .status.connected {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status.disconnected {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .dynamic-ui {
+            min-height: 300px;
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 20px;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .dynamic-ui.has-content {
+            border-style: solid;
+            border-color: #48bb78;
+            background: white;
+            align-items: stretch;
+            justify-content: flex-start;
+            text-align: left;
+        }
+
+        .placeholder {
+            color: #a0aec0;
+            font-style: italic;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .scenario-btn {
+            padding: 8px 16px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .scenario-btn:hover {
+            background: #edf2f7;
+            border-color: #a0aec0;
+        }
+
+        .scenario-btn.active {
+            background: #4299e1;
+            color: white;
+            border-color: #4299e1;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .data-table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .data-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e2e8f0;
+            border-top: 2px solid #4299e1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .metric {
+            background: #f7fafc;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4299e1;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: #718096;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 MUP 2.0 + LLM Integration Demo</h1>
+            <p>Experience AI-driven dynamic UI generation capabilities</p>
+        </div>
+
+        <div class="demo-grid">
+            <!-- Left: LLM Chat Interface -->
+            <div class="panel">
+                <h3>💬 LLM Chat Interface</h3>
+                <div class="status disconnected" id="llmStatus">Not Connected</div>
+                
+                <div class="controls">
+                    <button class="scenario-btn active" data-scenario="form">Form Generation</button>
+                    <button class="scenario-btn" data-scenario="dashboard">Data Dashboard</button>
+                    <button class="scenario-btn" data-scenario="survey">Survey</button>
+                    <button class="scenario-btn" data-scenario="ecommerce">E-commerce</button>
+                </div>
+
+                <div class="chat-container" id="chatContainer">
+                    <div class="message system">
+                        🎯 Select a scenario to start chatting, or directly input your requirements
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <input type="text" id="userInput" placeholder="Describe the interface you want..." 
+                           onkeypress="if(event.key==='Enter') sendMessage()">
+                    <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+                    <button class="btn btn-success" onclick="connectToMUP()">Connect MUP</button>
+                </div>
+            </div>
+
+            <!-- Right: Dynamic UI Generation Area -->
+            <div class="panel">
+                <h3>🎨 Dynamic UI Generation Area</h3>
+                <div class="status disconnected" id="mupStatus">MUP Not Connected</div>
+                
+                <div class="dynamic-ui" id="dynamicUI">
+                    <div class="placeholder">
+                        <h4>Waiting for LLM to generate UI...</h4>
+                        <p>Chat with the LLM on the left to describe your desired interface</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom: System Monitoring -->
+        <div class="panel">
+            <h3>📊 System Monitoring</h3>
+            <div class="metrics">
+                <div class="metric">
+                    <div class="metric-value" id="messageCount">0</div>
+                    <div class="metric-label">Messages</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="uiGenerations">0</div>
+                    <div class="metric-label">UI Generations</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="avgResponseTime">0ms</div>
+                    <div class="metric-label">Avg Response Time</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="connectionTime">0s</div>
+                    <div class="metric-label">Connection Time</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="mup-client-v2.js"></script>
+    <script>
+        // Global variables
+        let mupClient = null;
+        let currentScenario = 'form';
+        let messageCount = 0;
+        let uiGenerations = 0;
+        let responseTimes = [];
+        let connectionStartTime = null;
+
+        // Mock LLM response data
+        const mockLLMResponses = {
+            form: {
+                "I need a user registration form": {
+                    response: "I'll create a user registration form for you with name, email, password, and confirm password fields.",
+                    ui: {
+                        type: "form",
+                        title: "User Registration",
+                        fields: [
+                            { type: "text", name: "name", label: "Full Name", required: true },
+                            { type: "email", name: "email", label: "Email Address", required: true },
+                            { type: "password", name: "password", label: "Password", required: true },
+                            { type: "password", name: "confirmPassword", label: "Confirm Password", required: true }
+                        ],
+                        submitText: "Register"
+                    }
+                },
+                "Create a contact us form": {
+                    response: "I've designed a contact form with necessary contact information fields.",
+                    ui: {
+                        type: "form",
+                        title: "Contact Us",
+                        fields: [
+                            { type: "text", name: "name", label: "Your Name", required: true },
+                            { type: "email", name: "email", label: "Email Address", required: true },
+                            { type: "select", name: "subject", label: "Inquiry Type", 
+                              options: ["Product Inquiry", "Technical Support", "Business Partnership", "Other"], required: true },
+                            { type: "textarea", name: "message", label: "Message", required: true }
+                        ],
+                        submitText: "Send Message"
+                    }
+                }
+            },
+            dashboard: {
+                "Show sales data dashboard": {
+                    response: "I've created a sales data dashboard displaying key business metrics.",
+                    ui: {
+                        type: "dashboard",
+                        title: "Sales Data Dashboard",
+                        widgets: [
+                            { type: "metric", title: "Today's Sales", value: "$128,456", change: "+12.5%" },
+                            { type: "metric", title: "Orders", value: "1,234", change: "+8.3%" },
+                            { type: "metric", title: "Customers", value: "5,678", change: "+15.2%" },
+                            { type: "chart", title: "Monthly Sales Trend", data: "chart_data" }
+                        ]
+                    }
+                },
+                "Create user activity statistics": {
+                    response: "I've created a user activity statistics panel to help you understand user behavior.",
+                    ui: {
+                        type: "dashboard",
+                        title: "User Activity Statistics",
+                        widgets: [
+                            { type: "metric", title: "Daily Active Users", value: "12,345", change: "+5.2%" },
+                            { type: "metric", title: "Monthly Active Users", value: "45,678", change: "+12.8%" },
+                            { type: "metric", title: "Avg Session Duration", value: "8m 32s", change: "+3.1%" },
+                            { type: "table", title: "Popular Pages", data: "page_data" }
+                        ]
+                    }
+                }
+            },
+            survey: {
+                "Create product satisfaction survey": {
+                    response: "I've designed a product satisfaction survey with various question types.",
+                    ui: {
+                        type: "survey",
+                        title: "Product Satisfaction Survey",
+                        questions: [
+                            { type: "radio", question: "How satisfied are you with our product overall?", 
+                              options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"] },
+                            { type: "checkbox", question: "Which features do you like most? (Multiple choice)", 
+                              options: ["Interface Design", "Rich Features", "Easy Operation", "Response Speed", "Customer Service"] },
+                            { type: "text", question: "What additional features would you like us to add?" },
+                            { type: "rating", question: "Would you recommend our product to friends?", scale: 10 }
+                        ]
+                    }
+                }
+            },
+            ecommerce: {
+                "Create product showcase page": {
+                    response: "I've created a product showcase page with product information and purchase functionality.",
+                    ui: {
+                        type: "ecommerce",
+                        title: "Product Details",
+                        product: {
+                            name: "Smart Watch Pro",
+                            price: "$299",
+                            originalPrice: "$349",
+                            rating: 4.8,
+                            reviews: 1234,
+                            features: ["Heart Rate Monitor", "GPS Tracking", "50m Waterproof", "7-day Battery"],
+                            description: "New smart watch integrating health monitoring, fitness tracking, and smart notifications."
+                        },
+                        actions: ["Buy Now", "Add to Cart", "Add to Wishlist"]
+                    }
+                }
+            }
+        };
+
+        // Scenario preset prompts
+        const scenarioPrompts = {
+            form: "I need a user registration form",
+            dashboard: "Show sales data dashboard",
+            survey: "Create product satisfaction survey",
+            ecommerce: "Create product showcase page"
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupScenarioButtons();
+            updateMetrics();
+            setInterval(updateConnectionTime, 1000);
+        });
+
+        // Setup scenario buttons
+        function setupScenarioButtons() {
+            document.querySelectorAll('.scenario-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentScenario = this.dataset.scenario;
+                    
+                    // Auto-fill scenario prompt
+                    const prompt = scenarioPrompts[currentScenario];
+                    document.getElementById('userInput').value = prompt;
+                });
+            });
+        }
+
+        // Connect to MUP server
+        async function connectToMUP() {
+            try {
+                mupClient = new MUPClientV2();
+                
+                mupClient.on('connected', () => {
+                    updateStatus('mupStatus', 'connected', 'MUP Connected');
+                    updateStatus('llmStatus', 'connected', 'LLM Ready');
+                    connectionStartTime = Date.now();
+                    addMessage('system', '🎉 MUP server connected successfully! You can start chatting now.');
+                });
+                
+                mupClient.on('disconnected', () => {
+                    updateStatus('mupStatus', 'disconnected', 'MUP Not Connected');
+                    updateStatus('llmStatus', 'disconnected', 'LLM Not Connected');
+                    addMessage('system', '❌ Connection to MUP server lost.');
+                });
+                
+                mupClient.on('error', (error) => {
+                    console.error('MUP connection error:', error);
+                    addMessage('system', `❌ Connection error: ${error.message}`);
+                });
+                
+                await mupClient.connect('ws://localhost:8080');
+                
+            } catch (error) {
+                console.error('Connection failed:', error);
+                addMessage('system', `❌ Connection failed: ${error.message}`);
+            }
+        }
+
+        // Send message
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            if (!mupClient || !mupClient.isConnected()) {
+                addMessage('system', '⚠️ Please connect to MUP server first');
+                return;
+            }
+            
+            // Display user message
+            addMessage('user', message);
+            input.value = '';
+            
+            // Show loading state
+            const loadingMsg = addMessage('assistant', '<div class="loading"></div> Thinking...');
+            
+            try {
+                const startTime = Date.now();
+                
+                // Simulate LLM processing delay
+                await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+                
+                // Get Mock response
+                const response = getMockLLMResponse(message);
+                
+                // Update assistant message
+                loadingMsg.innerHTML = response.response;
+                
+                // Generate UI
+                if (response.ui) {
+                    await generateUI(response.ui);
+                    uiGenerations++;
+                }
+                
+                // Record response time
+                const responseTime = Date.now() - startTime;
+                responseTimes.push(responseTime);
+                messageCount++;
+                
+                updateMetrics();
+                
+            } catch (error) {
+                loadingMsg.innerHTML = `❌ Processing failed: ${error.message}`;
+            }
+        }
+
+        // Get Mock LLM response
+        function getMockLLMResponse(message) {
+            const scenarioResponses = mockLLMResponses[currentScenario] || {};
+            
+            // Exact match
+            if (scenarioResponses[message]) {
+                return scenarioResponses[message];
+            }
+            
+            // Fuzzy match
+            for (const [key, value] of Object.entries(scenarioResponses)) {
+                if (message.includes(key.split(' ')[0]) || key.includes(message.split(' ')[0])) {
+                    return value;
+                }
+            }
+            
+            // Default response
+            return {
+                response: `I understand you want to create a ${currentScenario}-related interface. Let me generate a sample interface for you.`,
+                ui: getDefaultUI(currentScenario)
+            };
+        }
+
+        // Get default UI
+        function getDefaultUI(scenario) {
+            const defaults = {
+                form: {
+                    type: "form",
+                    title: "Sample Form",
+                    fields: [
+                        { type: "text", name: "field1", label: "Field 1", required: true },
+                        { type: "email", name: "field2", label: "Field 2", required: false }
+                    ],
+                    submitText: "Submit"
+                },
+                dashboard: {
+                    type: "dashboard",
+                    title: "Data Dashboard",
+                    widgets: [
+                        { type: "metric", title: "Metric 1", value: "123", change: "+5%" },
+                        { type: "metric", title: "Metric 2", value: "456", change: "-2%" }
+                    ]
+                },
+                survey: {
+                    type: "survey",
+                    title: "Survey",
+                    questions: [
+                        { type: "radio", question: "How satisfied are you?", options: ["Satisfied", "Neutral", "Dissatisfied"] }
+                    ]
+                },
+                ecommerce: {
+                    type: "ecommerce",
+                    title: "Product Information",
+                    product: {
+                        name: "Sample Product",
+                        price: "$99",
+                        rating: 4.5,
+                        description: "This is a sample product description."
+                    }
+                }
+            };
+            
+            return defaults[scenario] || defaults.form;
+        }
+
+        // Generate UI
+        async function generateUI(uiData) {
+            const container = document.getElementById('dynamicUI');
+            container.classList.add('has-content');
+            
+            let html = '';
+            
+            switch (uiData.type) {
+                case 'form':
+                    html = generateFormHTML(uiData);
+                    break;
+                case 'dashboard':
+                    html = generateDashboardHTML(uiData);
+                    break;
+                case 'survey':
+                    html = generateSurveyHTML(uiData);
+                    break;
+                case 'ecommerce':
+                    html = generateEcommerceHTML(uiData);
+                    break;
+                default:
+                    html = '<p>Unknown UI type</p>';
+            }
+            
+            container.innerHTML = html;
+            
+            // If connected to MUP, send component update
+            if (mupClient && mupClient.isConnected()) {
+                try {
+                    await mupClient.sendEvent('ui_generator', 'generate_ui', {
+                        ui_type: uiData.type,
+                        ui_data: uiData
+                    });
+                } catch (error) {
+                    console.error('Failed to send UI update:', error);
+                }
+            }
+        }
+
+        // Generate form HTML
+        function generateFormHTML(data) {
+            let html = `<h4>${data.title}</h4><form onsubmit="handleFormSubmit(event)">`;
+            
+            data.fields.forEach(field => {
+                html += '<div class="form-group">';
+                html += `<label>${field.label}${field.required ? ' *' : ''}</label>`;
+                
+                switch (field.type) {
+                    case 'textarea':
+                        html += `<textarea name="${field.name}" ${field.required ? 'required' : ''}></textarea>`;
+                        break;
+                    case 'select':
+                        html += `<select name="${field.name}" ${field.required ? 'required' : ''}>`;
+                        if (field.options) {
+                            field.options.forEach(option => {
+                                html += `<option value="${option}">${option}</option>`;
+                            });
+                        }
+                        html += '</select>';
+                        break;
+                    default:
+                        html += `<input type="${field.type}" name="${field.name}" ${field.required ? 'required' : ''}>`;
+                }
+                
+                html += '</div>';
+            });
+            
+            html += `<button type="submit" class="btn btn-primary">${data.submitText}</button>`;
+            html += '</form>';
+            
+            return html;
+        }
+
+        // Generate dashboard HTML
+        function generateDashboardHTML(data) {
+            let html = `<h4>${data.title}</h4><div class="metrics">`;
+            
+            data.widgets.forEach(widget => {
+                if (widget.type === 'metric') {
+                    html += `
+                        <div class="metric">
+                            <div class="metric-value">${widget.value}</div>
+                            <div class="metric-label">${widget.title}</div>
+                            ${widget.change ? `<div style="font-size: 0.7rem; color: ${widget.change.startsWith('+') ? '#48bb78' : '#f56565'}">${widget.change}</div>` : ''}
+                        </div>
+                    `;
+                } else if (widget.type === 'table') {
+                    html += `
+                        <div style="grid-column: 1 / -1;">
+                            <h5>${widget.title}</h5>
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>Page</th><th>Views</th><th>Bounce Rate</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Home</td><td>12,345</td><td>25.3%</td></tr>
+                                    <tr><td>Products</td><td>8,901</td><td>18.7%</td></tr>
+                                    <tr><td>About Us</td><td>3,456</td><td>45.2%</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+            });
+            
+            html += '</div>';
+            return html;
+        }
+
+        // Generate survey HTML
+        function generateSurveyHTML(data) {
+            let html = `<h4>${data.title}</h4><form onsubmit="handleSurveySubmit(event)">`;
+            
+            data.questions.forEach((question, index) => {
+                html += '<div class="form-group">';
+                html += `<label>${question.question}</label>`;
+                
+                switch (question.type) {
+                    case 'radio':
+                        question.options.forEach(option => {
+                            html += `
+                                <div>
+                                    <input type="radio" name="q${index}" value="${option}" id="q${index}_${option}">
+                                    <label for="q${index}_${option}" style="margin-left: 5px; font-weight: normal;">${option}</label>
+                                </div>
+                            `;
+                        });
+                        break;
+                    case 'checkbox':
+                        question.options.forEach(option => {
+                            html += `
+                                <div>
+                                    <input type="checkbox" name="q${index}[]" value="${option}" id="q${index}_${option}">
+                                    <label for="q${index}_${option}" style="margin-left: 5px; font-weight: normal;">${option}</label>
+                                </div>
+                            `;
+                        });
+                        break;
+                    case 'text':
+                        html += `<input type="text" name="q${index}">`;
+                        break;
+                    case 'rating':
+                        html += '<div style="display: flex; gap: 5px;">';
+                        for (let i = 1; i <= question.scale; i++) {
+                            html += `
+                                <input type="radio" name="q${index}" value="${i}" id="q${index}_${i}">
+                                <label for="q${index}_${i}" style="margin: 0; font-weight: normal;">${i}</label>
+                            `;
+                        }
+                        html += '</div>';
+                        break;
+                }
+                
+                html += '</div>';
+            });
+            
+            html += '<button type="submit" class="btn btn-primary">Submit Survey</button>';
+            html += '</form>';
+            
+            return html;
+        }
+
+        // Generate ecommerce HTML
+        function generateEcommerceHTML(data) {
+            const product = data.product;
+            let html = `
+                <h4>${data.title}</h4>
+                <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
+                    <h3>${product.name}</h3>
+                    <div style="display: flex; align-items: center; gap: 10px; margin: 10px 0;">
+                        <span style="font-size: 1.5rem; font-weight: bold; color: #e53e3e;">${product.price}</span>
+                        ${product.originalPrice ? `<span style="text-decoration: line-through; color: #a0aec0;">${product.originalPrice}</span>` : ''}
+                    </div>
+                    ${product.rating ? `
+                        <div style="margin: 10px 0;">
+                            <span>⭐ ${product.rating}</span>
+                            <span style="color: #718096; margin-left: 10px;">(${product.reviews || 0} reviews)</span>
+                        </div>
+                    ` : ''}
+                    ${product.features ? `
+                        <div style="margin: 15px 0;">
+                            <strong>Product Features:</strong>
+                            <ul style="margin: 5px 0; padding-left: 20px;">
+                                ${product.features.map(feature => `<li>${feature}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    <p style="color: #4a5568; margin: 15px 0;">${product.description}</p>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        ${data.actions ? data.actions.map(action => `
+                            <button class="btn ${action === 'Buy Now' ? 'btn-primary' : 'btn-success'}" 
+                                    onclick="handleProductAction('${action}')">${action}</button>
+                        `).join('') : ''}
+                    </div>
+                </div>
+            `;
+            
+            return html;
+        }
+
+        // Handle form submit
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+            addMessage('system', `📝 Form submitted successfully! Data: ${JSON.stringify(data, null, 2)}`);
+        }
+
+        // Handle survey submit
+        function handleSurveySubmit(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+            addMessage('system', `📊 Survey submitted successfully! Thank you for your participation.`);
+        }
+
+        // Handle product action
+        function handleProductAction(action) {
+            addMessage('system', `🛒 ${action} action triggered!`);
+        }
+
+        // Add message
+        function addMessage(type, content) {
+            const container = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.innerHTML = content;
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+            return messageDiv;
+        }
+
+        // Update status
+        function updateStatus(elementId, status, text) {
+            const element = document.getElementById(elementId);
+            element.className = `status ${status}`;
+            element.textContent = text;
+        }
+
+        // Update metrics
+        function updateMetrics() {
+            document.getElementById('messageCount').textContent = messageCount;
+            document.getElementById('uiGenerations').textContent = uiGenerations;
+            
+            if (responseTimes.length > 0) {
+                const avgTime = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
+                document.getElementById('avgResponseTime').textContent = Math.round(avgTime) + 'ms';
+            }
+        }
+
+        // Update connection time
+        function updateConnectionTime() {
+            if (connectionStartTime) {
+                const elapsed = Math.floor((Date.now() - connectionStartTime) / 1000);
+                document.getElementById('connectionTime').textContent = elapsed + 's';
+            }
+        }
+    </script>
+</body>
+</html>
