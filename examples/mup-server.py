@@ -269,9 +269,9 @@ class MUPServer:
         payload = mup_data.get("payload", {})
         message_type = mup_data.get("message_type")
         
-        if message_type == "request" and payload.get("type") == "handshake":
+        if message_type == "handshake_request" and payload.get("type") == "handshake":
             await self.handle_handshake(client_id, payload)
-        elif message_type == "notification" and payload.get("type") == "user_interaction":
+        elif message_type == "event_notification" and payload.get("type") == "user_interaction":
             await self.handle_user_interaction(client_id, payload)
         else:
             print(f"未知消息类型: {message_type}")
@@ -408,7 +408,7 @@ class MUPServer:
                     "id": "mup-server",
                     "version": "1.0.0"
                 },
-                "message_type": "notification",
+                "message_type": "component_update",
                 "payload": {
                     "type": "component_tree_update",
                     "version": "1.0.0",

@@ -65,7 +65,7 @@ class MUPClient {
           id: 'web-client',
           version: this.version
         },
-        message_type: 'request',
+        message_type: 'handshake_request',
         payload: {
           type: 'handshake',
           capabilities: ['container', 'text', 'input', 'button'],
@@ -445,7 +445,7 @@ class MUPClient {
           id: 'web-client',
           version: this.version
         },
-        message_type: 'notification',
+        message_type: 'event_notification',
         payload: eventData
       }
     };

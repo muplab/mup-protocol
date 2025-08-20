@@ -77,21 +77,34 @@ All MUP messages must follow the following JSON format:
   "mup": {
     "version": "1.0.0",
     "message_id": "msg_1234567890_abcdef",
-    "timestamp": "2024-12-01T12:00:00.000Z",
-    "message_type": "request|response|notification|error",
-    "source": {
-      "type": "client|server",
-      "id": "unique_source_id",
-      "version": "1.0.0"
-    },
-    "target": {
-      "type": "client|server",
-      "id": "unique_target_id"
+    "timestamp": "2024-12-01T12:00:00Z",
+    "message_type": "handshake_request|handshake_response|capability_query|component_update|event_notification|error|auth_request|batch_operation|incremental_update|version_negotiation",
+    "routing": {
+      "source": {
+        "type": "client|server",
+        "id": "unique_source_id",
+        "version": "1.0.0"
+      },
+      "target": {
+        "type": "client|server",
+        "id": "unique_target_id",
+        "version": "1.0.0"
+      }
     },
     "payload": {}
   }
 }
 ```
+
+**Field Descriptions**:
+- `version`: Protocol version number, required
+- `message_id`: Unique message identifier, required
+- `timestamp`: Message timestamp (ISO 8601 format), required
+- `message_type`: Message type, required
+- `routing`: Routing information object
+  - `source`: Message source information, conditionally required (required in multi-node environments)
+  - `target`: Message target information, conditionally required (required in multi-node environments)
+- `payload`: Message payload containing specific business data
 
 ### 3.2 Message Types
 
@@ -104,7 +117,17 @@ All MUP messages must follow the following JSON format:
     "version": "1.0.0",
     "message_type": "handshake_request",
     "message_id": "handshake_001",
-    "timestamp": "2024-12-01T12:00:00.000Z",
+    "timestamp": "2024-12-01T12:00:00Z",
+    "routing": {
+      "source": {
+        "id": "client_001",
+        "type": "client"
+      },
+      "target": {
+        "id": "server_001",
+        "type": "server"
+      }
+    },
     "payload": {
       "client_info": {
         "name": "MUP Client",
@@ -145,7 +168,17 @@ All MUP messages must follow the following JSON format:
     "version": "1.0.0",
     "message_type": "handshake_response",
     "message_id": "handshake_001",
-    "timestamp": "2024-12-01T12:00:01.000Z",
+    "timestamp": "2024-12-01T12:00:01Z",
+    "routing": {
+      "source": {
+        "id": "server_001",
+        "type": "server"
+      },
+      "target": {
+        "id": "client_001",
+        "type": "client"
+      }
+    },
     "payload": {
       "server_info": {
         "name": "MUP Server",
@@ -182,7 +215,9 @@ All MUP messages must follow the following JSON format:
         "security": {
           "authentication_required": true,
           "supported_auth_methods": ["bearer_token", "api_key"],
-          "permissions_model": "rbac"
+          "permissions_model": "rbac",
+          "nonce": "abc123def456",
+          "expires_at": "2024-12-01T13:00:01Z"
         }
       }
     }
@@ -198,7 +233,17 @@ All MUP messages must follow the following JSON format:
     "version": "1.0.0",
     "message_type": "capability_query",
     "message_id": "query_001",
-    "timestamp": "2024-12-01T12:00:02.000Z",
+    "timestamp": "2024-12-01T12:00:02Z",
+    "routing": {
+      "source": {
+        "id": "client_001",
+        "type": "client"
+      },
+      "target": {
+        "id": "server_001",
+        "type": "server"
+      }
+    },
     "payload": {
       "query_type": "component_availability",
       "filters": {
@@ -206,6 +251,14 @@ All MUP messages must follow the following JSON format:
         "required_features": ["interactive", "real_time"],
         "data_source_type": "json",
         "min_version": "1.0.0"
+      },
+      "pagination": {
+        "page": 1,
+        "page_size": 50
+      },
+      "compression": {
+        "enabled": true,
+        "algorithm": "gzip"
       }
     }
   }
@@ -220,9 +273,19 @@ All MUP messages must follow the following JSON format:
     "version": "1.0.0",
     "message_type": "component_update",
     "message_id": "update_001",
-    "timestamp": "2024-12-01T12:00:03.000Z",
+    "timestamp": "2024-12-01T12:00:03Z",
+    "routing": {
+      "source": {
+        "id": "server_001",
+        "type": "server"
+      },
+      "target": {
+        "id": "client_001",
+        "type": "client"
+      }
+    },
     "payload": {
-      "update_type": "full|partial|incremental",
+      "update_type": "full",
       "component_tree": {
         "id": "app_root",
         "type": "container",
@@ -267,14 +330,24 @@ All MUP messages must follow the following JSON format:
     "version": "1.0.0",
     "message_type": "event_notification",
     "message_id": "event_001",
-    "timestamp": "2024-12-01T12:00:04.000Z",
+    "timestamp": "2024-12-01T12:00:04Z",
+    "routing": {
+      "source": {
+        "id": "client_001",
+        "type": "client"
+      },
+      "target": {
+        "id": "server_001",
+        "type": "server"
+      }
+    },
     "payload": {
       "component_id": "submit_button",
       "event_type": "click",
       "event_data": {
         "mouse_position": [100, 200],
         "modifier_keys": ["ctrl"],
-        "timestamp": "2024-12-01T12:00:04.000Z"
+        "timestamp": "2024-12-01T12:00:04Z"
       },
       "context": {
         "form_data": {
@@ -296,8 +369,21 @@ All MUP messages must follow the following JSON format:
     "version": "1.0.0",
     "message_type": "error",
     "message_id": "error_001",
-    "timestamp": "2024-12-01T12:00:05.000Z",
+    "timestamp": "2024-12-01T12:00:05Z",
+    "routing": {
+      "source": {
+        "id": "server_001",
+        "type": "server"
+      },
+      "target": {
+        "id": "client_001",
+        "type": "client"
+      }
+    },
     "payload": {
+      "error_code": "MUP_COMPONENT_NOT_SUPPORTED",
+      "severity": "error",
+      "correlation_id": "req_12345",
       "error": {
         "code": "MUP_COMPONENT_NOT_SUPPORTED",
         "message": "Unsupported component type",
@@ -739,7 +825,7 @@ All input data must undergo strict JSON Schema validation:
     "version": "1.0.0",
     "message_type": "error",
     "message_id": "error_001",
-    "timestamp": "2024-12-01T12:00:00.000Z",
+    "timestamp": "2024-12-01T12:00:00Z",
     "payload": {
       "error": {
         "code": "MUP_VALIDATION_FAILED",
@@ -785,6 +871,18 @@ MUP follows [Semantic Versioning 2.0.0](https://semver.org/) specification:
   "mup": {
     "version": "1.0.0",
     "message_type": "version_negotiation",
+    "message_id": "version_001",
+    "timestamp": "2024-01-15T10:30:00Z",
+    "routing": {
+      "source": {
+        "id": "client_001",
+        "type": "client"
+      },
+      "target": {
+        "id": "server_001",
+        "type": "server"
+      }
+    },
     "payload": {
       "supported_versions": ["1.0.0", "1.1.0", "1.2.0"],
       "preferred_version": "1.2.0",

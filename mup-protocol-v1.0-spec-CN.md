@@ -75,21 +75,34 @@ Model UI Protocol (MUP) 是一个开放标准协议，旨在为大语言模型(L
   "mup": {
     "version": "1.0.0",
     "message_id": "msg_1234567890_abcdef",
-    "timestamp": "2024-12-01T12:00:00.000Z",
-    "message_type": "request|response|notification|error",
-    "source": {
-      "type": "client|server",
-      "id": "unique_source_id",
-      "version": "1.0.0"
-    },
-    "target": {
-      "type": "client|server",
-      "id": "unique_target_id"
+    "timestamp": "2024-12-01T12:00:00Z",
+    "message_type": "handshake_request|handshake_response|capability_query|component_update|event_notification|error|auth_request|batch_operation|incremental_update|version_negotiation",
+    "routing": {
+      "source": {
+        "type": "client|server",
+        "id": "unique_source_id",
+        "version": "1.0.0"
+      },
+      "target": {
+        "type": "client|server",
+        "id": "unique_target_id",
+        "version": "1.0.0"
+      }
     },
     "payload": {}
   }
 }
 ```
+
+**字段说明**:
+- `version`: 协议版本号，必填
+- `message_id`: 消息唯一标识符，必填
+- `timestamp`: 消息时间戳（ISO 8601格式），必填
+- `message_type`: 消息类型，必填
+- `routing`: 路由信息对象
+  - `source`: 消息源信息，条件必填（在多节点环境中必填）
+  - `target`: 消息目标信息，条件必填（在多节点环境中必填）
+- `payload`: 消息负载，包含具体的业务数据
 
 ### 3.2 消息类型
 
@@ -102,7 +115,19 @@ Model UI Protocol (MUP) 是一个开放标准协议，旨在为大语言模型(L
     "version": "1.0.0",
     "message_type": "handshake_request",
     "message_id": "handshake_001",
-    "timestamp": "2024-12-01T12:00:00.000Z",
+    "timestamp": "2024-12-01T12:00:00Z",
+    "routing": {
+      "source": {
+        "type": "client",
+        "id": "client_001",
+        "version": "1.0.0"
+      },
+      "target": {
+        "type": "server",
+        "id": "server_001",
+        "version": "1.0.0"
+      }
+    },
     "payload": {
       "client_info": {
         "name": "MUP Client",
@@ -143,7 +168,19 @@ Model UI Protocol (MUP) 是一个开放标准协议，旨在为大语言模型(L
     "version": "1.0.0",
     "message_type": "handshake_response",
     "message_id": "handshake_001",
-    "timestamp": "2024-12-01T12:00:01.000Z",
+    "timestamp": "2024-12-01T12:00:01Z",
+    "routing": {
+      "source": {
+        "type": "server",
+        "id": "server_001",
+        "version": "1.0.0"
+      },
+      "target": {
+        "type": "client",
+        "id": "client_001",
+        "version": "1.0.0"
+      }
+    },
     "payload": {
       "server_info": {
         "name": "MUP Server",
@@ -196,7 +233,19 @@ Model UI Protocol (MUP) 是一个开放标准协议，旨在为大语言模型(L
     "version": "1.0.0",
     "message_type": "capability_query",
     "message_id": "query_001",
-    "timestamp": "2024-12-01T12:00:02.000Z",
+    "timestamp": "2024-12-01T12:00:02Z",
+    "routing": {
+      "source": {
+        "id": "client_001",
+        "type": "client",
+        "version": "1.0.0"
+      },
+      "target": {
+        "id": "server_001",
+        "type": "server",
+        "version": "1.0.0"
+      }
+    },
     "payload": {
       "query_type": "component_availability",
       "filters": {
@@ -204,6 +253,14 @@ Model UI Protocol (MUP) 是一个开放标准协议，旨在为大语言模型(L
         "required_features": ["interactive", "real_time"],
         "data_source_type": "json",
         "min_version": "1.0.0"
+      },
+      "pagination": {
+        "page": 1,
+        "page_size": 50
+      },
+      "compression": {
+        "enabled": true,
+        "algorithm": "gzip"
       }
     }
   }
@@ -218,7 +275,17 @@ Model UI Protocol (MUP) 是一个开放标准协议，旨在为大语言模型(L
     "version": "1.0.0",
     "message_type": "component_update",
     "message_id": "update_001",
-    "timestamp": "2024-12-01T12:00:03.000Z",
+    "timestamp": "2024-12-01T12:00:03Z",
+    "routing": {
+      "source": {
+        "id": "server_001",
+        "type": "server"
+      },
+      "target": {
+        "id": "client_001",
+        "type": "client"
+      }
+    },
     "payload": {
       "update_type": "full|partial|incremental",
       "component_tree": {
@@ -265,14 +332,24 @@ Model UI Protocol (MUP) 是一个开放标准协议，旨在为大语言模型(L
     "version": "1.0.0",
     "message_type": "event_notification",
     "message_id": "event_001",
-    "timestamp": "2024-12-01T12:00:04.000Z",
+    "timestamp": "2024-12-01T12:00:04Z",
+    "routing": {
+      "source": {
+        "id": "client_001",
+        "type": "client"
+      },
+      "target": {
+        "id": "server_001",
+        "type": "server"
+      }
+    },
     "payload": {
       "component_id": "submit_button",
       "event_type": "click",
       "event_data": {
         "mouse_position": [100, 200],
         "modifier_keys": ["ctrl"],
-        "timestamp": "2024-12-01T12:00:04.000Z"
+        "timestamp": "2024-12-01T12:00:04Z"
       },
       "context": {
         "form_data": {
@@ -294,8 +371,21 @@ Model UI Protocol (MUP) 是一个开放标准协议，旨在为大语言模型(L
     "version": "1.0.0",
     "message_type": "error",
     "message_id": "error_001",
-    "timestamp": "2024-12-01T12:00:05.000Z",
+    "timestamp": "2024-12-01T12:00:05Z",
+    "routing": {
+      "source": {
+        "id": "server_001",
+        "type": "server"
+      },
+      "target": {
+        "id": "client_001",
+        "type": "client"
+      }
+    },
     "payload": {
+      "error_code": "MUP_COMPONENT_NOT_SUPPORTED",
+      "severity": "error",
+      "correlation_id": "req_12345",
       "error": {
         "code": "MUP_COMPONENT_NOT_SUPPORTED",
         "message": "不支持的组件类型",
@@ -338,8 +428,8 @@ Model UI Protocol (MUP) 是一个开放标准协议，旨在为大语言模型(L
     "css_property": "value"
   },
   "metadata": {
-    "created_at": "2024-12-01T12:00:00.000Z",
-    "updated_at": "2024-12-01T12:00:00.000Z",
+    "created_at": "2024-12-01T12:00:00Z",
+    "updated_at": "2024-12-01T12:00:00Z",
     "source": "component_source",
     "tags": ["tag1", "tag2"]
   }
@@ -737,7 +827,7 @@ Model UI Protocol (MUP) 是一个开放标准协议，旨在为大语言模型(L
     "version": "1.0.0",
     "message_type": "error",
     "message_id": "error_001",
-    "timestamp": "2024-12-01T12:00:00.000Z",
+    "timestamp": "2024-12-01T12:00:00Z",
     "payload": {
       "error": {
         "code": "MUP_VALIDATION_FAILED",
@@ -782,7 +872,19 @@ MUP遵循[Semantic Versioning 2.0.0](https://semver.org/)规范 <mcreference lin
 {
   "mup": {
     "version": "1.0.0",
+    "message_id": "msg_version_001",
+    "timestamp": "2024-01-15T10:30:00Z",
     "message_type": "version_negotiation",
+    "routing": {
+      "source": {
+        "id": "client_001",
+        "type": "client"
+      },
+      "target": {
+        "id": "server_001",
+        "type": "server"
+      }
+    },
     "payload": {
       "supported_versions": ["1.0.0", "1.1.0", "1.2.0"],
       "preferred_version": "1.2.0",

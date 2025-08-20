@@ -69,13 +69,20 @@ MUP enables AI models to create dynamic, interactive user interfaces that go bey
 import asyncio
 import websockets
 import json
+from datetime import datetime
 
 async def handle_client(websocket, path):
     # Send a simple form component
     component = {
         "mup": {
             "version": "1.0.0",
+            "message_id": f"msg_{int(datetime.now().timestamp() * 1000)}",
+            "timestamp": datetime.now().isoformat(),
             "message_type": "component_update",
+            "routing": {
+                "source": "mup_server",
+                "target": "mup_client"
+            },
             "payload": {
                 "component_tree": {
                     "id": "login_form",
@@ -109,6 +116,29 @@ asyncio.get_event_loop().run_forever()
 
 ```javascript
 const socket = new WebSocket('ws://localhost:8080');
+
+// Send handshake on connection
+socket.onopen = function() {
+    const handshake = {
+        mup: {
+            version: '1.0.0',
+            message_id: 'msg_' + Date.now(),
+            timestamp: new Date().toISOString(),
+            message_type: 'handshake_request',
+            routing: {
+                source: 'mup_client',
+                target: 'mup_server'
+            },
+            payload: {
+                client_info: {
+                    name: 'MUP Web Client',
+                    version: '1.0.0'
+                }
+            }
+        }
+    };
+    socket.send(JSON.stringify(handshake));
+};
 
 socket.onmessage = function(event) {
     const message = JSON.parse(event.data);
